@@ -28,6 +28,7 @@ A local web app to manage your CS2 storage units - move items in and out in bulk
 - **Move items to storage** - select items in your inventory, click "Move to Storage"
 - **Move items to inventory** - select items in the storage unit, click "Move to Inventory"
 - **Bulk move** - select multiple items at once and move them all
+- **Multi-account** - Basic multi-account support
 
 ## Notes
 
