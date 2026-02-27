@@ -35,3 +35,9 @@ A local web app to manage your CS2 storage units - move items in and out in bulk
 - No VAC ban risk - the app never connects to a VAC-secured server
 - Nothing is sent to any third-party server - all communication is between your machine and Steam
 - Run at your own risk
+
+## Donations
+If you find this useful, donations are appreciated! ❤️
+
+- **BTC:** `bc1q79tzqcndpa4kjax4tha48wnqzqxcyewheluuhj`
+- **XMR:** `88tNMYZnCXwC4kHctnv3CpE7B8ceUHNHEMRvai4QLvpAJpgB1x5SY1ABBmZKXyCAeijhmYjYtRee6SqHgVEJGWyuHhHBwi5`
