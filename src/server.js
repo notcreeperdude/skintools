@@ -16,21 +16,60 @@ let csgo = null;
 let steamGuardResolver = null;
 let connectionStatus = 'disconnected';
 let steamId64 = null;
+let currentLoginAccount = null; // tracks which account the active client is logging in as
 
 // Schema lookup: `${defindex}_${paintindex}` → { name, iconUrl }
 let itemSchema = {};
 let schemaLoaded = false;
 let pendingCraftResolve = null; // resolves when craftingComplete fires
 
-// ── Token helpers ─────────────────────────────────────────────────────────────
+// ── Token helpers (multi-account) ─────────────────────────────────────────────
+// File format: { active: "username", accounts: { username: "refreshToken", ... } }
+function loadTokenFile() {
+  try {
+    if (fs.existsSync(TOKEN_FILE)) {
+      const data = JSON.parse(fs.readFileSync(TOKEN_FILE, 'utf8'));
+      // Migrate old single-account format
+      if (data.accountName !== undefined && !data.accounts) {
+        const migrated = { active: data.accountName, accounts: { [data.accountName]: data.token } };
+        fs.writeFileSync(TOKEN_FILE, JSON.stringify(migrated));
+        return migrated;
+      }
+      return data;
+    }
+  } catch {}
+  return { active: null, accounts: {} };
+}
+function saveTokenFile(data) {
+  fs.writeFileSync(TOKEN_FILE, JSON.stringify(data));
+}
 function saveToken(accountName, token) {
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify({ accountName, token }));
+  const data = loadTokenFile();
+  if (!data.accounts) data.accounts = {};
+  data.accounts[accountName] = token;
+  data.active = accountName;
+  saveTokenFile(data);
 }
 function loadToken() {
-  try {
-    if (fs.existsSync(TOKEN_FILE)) return JSON.parse(fs.readFileSync(TOKEN_FILE, 'utf8'));
-  } catch {}
-  return null;
+  const data = loadTokenFile();
+  if (!data.active || !data.accounts?.[data.active]) return null;
+  return { accountName: data.active, token: data.accounts[data.active] };
+}
+function setActiveAccount(accountName) {
+  const data = loadTokenFile();
+  if (!(accountName in (data.accounts || {}))) return false;
+  data.active = accountName;
+  saveTokenFile(data);
+  return true;
+}
+function removeAccount(accountName) {
+  const data = loadTokenFile();
+  delete data.accounts[accountName];
+  if (data.active === accountName) {
+    data.active = Object.keys(data.accounts)[0] || null;
+  }
+  saveTokenFile(data);
+  return data;
 }
 function clearToken() { try { fs.unlinkSync(TOKEN_FILE); } catch {} }
 
@@ -180,8 +219,7 @@ function createClients() {
   });
 
   client.on('refreshToken', (token) => {
-    const saved = loadToken();
-    if (saved) saveToken(saved.accountName, token);
+    if (currentLoginAccount) saveToken(currentLoginAccount, token);
   });
 
   client.on('steamGuard', (domain, callback) => {
@@ -218,10 +256,21 @@ function createClients() {
 // ── Auth routes ───────────────────────────────────────────────────────────────
 app.get('/api/auth/status', (req, res) => {
   const saved = loadToken();
+  const tokenData = loadTokenFile();
   res.json({
     status: connectionStatus,
     hasSavedToken: !!saved?.token,
     savedAccountName: saved?.accountName || null,
+    accounts: Object.keys(tokenData.accounts || {}),
+    activeAccount: tokenData.active || null,
+  });
+});
+
+app.get('/api/auth/accounts', (req, res) => {
+  const tokenData = loadTokenFile();
+  res.json({
+    accounts: Object.keys(tokenData.accounts || {}),
+    active: tokenData.active || null,
   });
 });
 
@@ -230,7 +279,13 @@ app.post('/api/auth/login', (req, res) => {
   if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
   createClients();
   connectionStatus = 'connecting';
-  saveToken(username, null);
+  currentLoginAccount = username;
+  // Save username as placeholder so we know this account exists
+  const data = loadTokenFile();
+  if (!data.accounts) data.accounts = {};
+  data.accounts[username] = data.accounts[username] || null;
+  data.active = username;
+  saveTokenFile(data);
   client.logOn({ accountName: username, password });
   res.json({ ok: true });
 });
@@ -240,8 +295,44 @@ app.post('/api/auth/token-login', (req, res) => {
   if (!saved?.token) return res.status(400).json({ error: 'No saved token' });
   createClients();
   connectionStatus = 'connecting';
+  currentLoginAccount = saved.accountName;
   client.logOn({ refreshToken: saved.token });
   res.json({ ok: true });
+});
+
+app.post('/api/auth/switch', async (req, res) => {
+  const { accountName } = req.body;
+  if (!accountName) return res.status(400).json({ error: 'accountName required' });
+  if (!setActiveAccount(accountName)) return res.status(404).json({ error: 'Account not found' });
+
+  // Log off current session
+  if (client) { try { client.logOff(); } catch {} }
+  connectionStatus = 'connecting';
+  steamId64 = null;
+
+  // Log in with saved token for the new account
+  const saved = loadToken();
+  if (!saved?.token) {
+    connectionStatus = 'disconnected';
+    return res.status(400).json({ error: 'No saved token for that account — log in manually' });
+  }
+  createClients();
+  currentLoginAccount = accountName;
+  client.logOn({ refreshToken: saved.token });
+  res.json({ ok: true, accountName });
+});
+
+app.post('/api/auth/remove-account', (req, res) => {
+  const { accountName } = req.body;
+  if (!accountName) return res.status(400).json({ error: 'accountName required' });
+  const data = removeAccount(accountName);
+  // If we removed the active account, disconnect
+  if (connectionStatus === 'connected' && data.active !== accountName) {
+    if (client) { try { client.logOff(); } catch {} }
+    connectionStatus = 'disconnected';
+    steamId64 = null;
+  }
+  res.json({ ok: true, accounts: Object.keys(data.accounts), active: data.active });
 });
 
 app.post('/api/auth/guard', (req, res) => {
@@ -528,6 +619,7 @@ app.listen(PORT, () => {
   if (saved?.token) {
     console.log(`Auto-logging in as ${saved.accountName}...`);
     createClients();
+    currentLoginAccount = saved.accountName;
     client.logOn({ refreshToken: saved.token });
   }
 });

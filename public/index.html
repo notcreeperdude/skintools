@@ -411,7 +411,22 @@
       flex-wrap: wrap;
     }
     .rarity-filter-btns { display: flex; gap: 4px; flex-wrap: wrap; }
-    .rarity-btn {
+    .account-menu-item {
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .account-menu-item:hover { background: var(--surface2); }
+    .account-menu-item.active-account { color: var(--accent); font-weight: 600; }
+    .account-menu-remove { color: var(--muted); font-size: 11px; opacity: 0.6; cursor: pointer; padding: 2px 4px; border-radius: 3px; }
+    .account-menu-remove:hover { opacity: 1; color: var(--danger); }
+
+    .rarity-btn { 
       padding: 4px 10px;
       border-radius: 20px;
       border: 1px solid var(--border);
@@ -727,9 +742,23 @@
       <button class="nav-tab" onclick="switchTab('tradeup')">Trade-Up Contracts</button>
     </nav>
   </div>
-  <div class="status-badge">
-    <div class="status-dot" id="status-dot"></div>
-    <span id="status-text">Disconnected</span>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <!-- Account switcher (shown when logged in) -->
+    <div id="account-switcher" style="display:none;position:relative;">
+      <button class="btn btn-secondary btn-sm" onclick="toggleAccountMenu()" id="account-btn" style="display:flex;align-items:center;gap:6px;">
+        <span id="account-btn-label">Account</span> ▾
+      </button>
+      <div id="account-menu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--border);border-radius:8px;min-width:180px;z-index:200;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+        <div id="account-menu-list"></div>
+        <div style="border-top:1px solid var(--border);padding:6px;">
+          <div class="account-menu-item" onclick="addAccount()" style="color:var(--accent);">➕ Add account</div>
+        </div>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Disconnected</span>
+    </div>
   </div>
 </header>
 
@@ -739,11 +768,11 @@
     <h2>Sign in to Steam</h2>
     <p>Your credentials are only sent to Steam, never stored.</p>
 
-    <!-- Saved token login -->
-    <div id="token-login-section" style="display:none;">
-      <p id="saved-account-text" style="color:var(--text); margin-bottom:16px;"></p>
-      <button class="btn btn-primary" onclick="tokenLogin()">Continue as saved account</button>
-      <div class="divider">or</div>
+    <!-- Saved accounts list -->
+    <div id="saved-accounts-section" style="display:none;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Saved accounts</div>
+      <div id="saved-accounts-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+      <div class="divider">or sign in to a new account</div>
     </div>
 
     <!-- Username/password login -->
@@ -1051,7 +1080,10 @@ async function pollStatus() {
 
     if (data.status === 'connected') {
       stopPolling();
+      knownAccounts = data.accounts || [];
+      activeAccount = data.activeAccount;
       showApp();
+      updateAccountSwitcher();
       loadInventory();
     } else if (data.status === 'steamguard') {
       showGuard();
@@ -1094,26 +1126,150 @@ function updateStatusUI(status) {
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
+let knownAccounts = [];
+let activeAccount = null;
+
 async function checkInitialStatus() {
   const r = await fetch('/api/auth/status');
   const data = await r.json();
   updateStatusUI(data.status);
+  knownAccounts = data.accounts || [];
+  activeAccount = data.activeAccount;
 
   if (data.status === 'connected') {
     showApp();
+    updateAccountSwitcher();
     loadInventory();
     return;
   }
 
-  if (data.hasSavedToken) {
-    document.getElementById('token-login-section').style.display = 'block';
-    document.getElementById('saved-account-text').textContent =
-      `Continue as: ${data.savedAccountName}`;
+  // Show saved accounts on login screen if any exist
+  if (knownAccounts.length > 0) {
+    renderLoginAccountList(knownAccounts, activeAccount);
   }
 
   if (data.status === 'connecting') {
     startPolling();
   }
+}
+
+function renderLoginAccountList(accounts, active) {
+  const section = document.getElementById('saved-accounts-section');
+  const list = document.getElementById('saved-accounts-list');
+  section.style.display = 'block';
+  list.innerHTML = '';
+  for (const name of accounts) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;';
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-secondary';
+    btn.style.cssText = 'flex:1;text-align:left;font-size:13px;';
+    btn.textContent = (name === active ? '● ' : '') + name;
+    btn.onclick = () => quickLogin(name);
+    row.appendChild(btn);
+    list.appendChild(row);
+  }
+}
+
+async function quickLogin(accountName) {
+  document.getElementById('login-error').textContent = '';
+  const r = await fetch('/api/auth/switch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accountName }),
+  });
+  if (r.ok) {
+    updateStatusUI('connecting');
+    startPolling();
+  } else {
+    const d = await r.json();
+    showLoginError(d.error || 'Could not switch account');
+  }
+}
+
+function updateAccountSwitcher() {
+  const switcher = document.getElementById('account-switcher');
+  if (knownAccounts.length === 0) { switcher.style.display = 'none'; return; }
+  switcher.style.display = 'block';
+  document.getElementById('account-btn-label').textContent = activeAccount || 'Account';
+  renderAccountMenuList();
+}
+
+function renderAccountMenuList() {
+  const list = document.getElementById('account-menu-list');
+  list.innerHTML = '';
+  for (const name of knownAccounts) {
+    const row = document.createElement('div');
+    row.className = 'account-menu-item' + (name === activeAccount ? ' active-account' : '');
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = name;
+    nameSpan.style.flex = '1';
+    nameSpan.onclick = () => switchAccount(name);
+    const removeBtn = document.createElement('span');
+    removeBtn.className = 'account-menu-remove';
+    removeBtn.textContent = '✕';
+    removeBtn.title = 'Remove account';
+    removeBtn.onclick = (e) => { e.stopPropagation(); removeAccount(name); };
+    row.appendChild(nameSpan);
+    row.appendChild(removeBtn);
+    list.appendChild(row);
+  }
+}
+
+function toggleAccountMenu() {
+  const menu = document.getElementById('account-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('account-switcher')?.contains(e.target)) {
+    const menu = document.getElementById('account-menu');
+    if (menu) menu.style.display = 'none';
+  }
+});
+
+async function switchAccount(accountName) {
+  document.getElementById('account-menu').style.display = 'none';
+  if (accountName === activeAccount) return;
+  const r = await fetch('/api/auth/switch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accountName }),
+  });
+  if (r.ok) {
+    activeAccount = accountName;
+    document.getElementById('account-btn-label').textContent = accountName;
+    // Full reload to clear all inventory state
+    location.reload();
+  } else {
+    const d = await r.json();
+    toast(d.error || 'Switch failed', 'error');
+  }
+}
+
+async function removeAccount(accountName) {
+  if (!confirm(`Remove ${accountName} from saved accounts?`)) return;
+  const r = await fetch('/api/auth/remove-account', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accountName }),
+  });
+  if (r.ok) {
+    location.reload();
+  }
+}
+
+function addAccount() {
+  document.getElementById('account-menu').style.display = 'none';
+  // Show login screen with password form
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('nav-tabs').style.display = 'none';
+  document.getElementById('account-switcher').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('saved-accounts-section').style.display = 'none';
+  document.getElementById('password-login-section').style.display = 'block';
+  document.getElementById('guard-section').style.display = 'none';
 }
 
 async function doLogin() {
@@ -1127,17 +1283,6 @@ async function doLogin() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
-  if (r.ok) {
-    updateStatusUI('connecting');
-    startPolling();
-  } else {
-    const d = await r.json();
-    showLoginError(d.error);
-  }
-}
-
-async function tokenLogin() {
-  const r = await fetch('/api/auth/token-login', { method: 'POST' });
   if (r.ok) {
     updateStatusUI('connecting');
     startPolling();
@@ -1169,7 +1314,7 @@ async function logout() {
 
 function showGuard() {
   document.getElementById('password-login-section').style.display = 'none';
-  document.getElementById('token-login-section').style.display = 'none';
+  document.getElementById('saved-accounts-section').style.display = 'none';
   document.getElementById('guard-section').style.display = 'block';
 }
 
