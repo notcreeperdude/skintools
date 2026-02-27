@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkinTools</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3349;
+      --accent: #4f8ef7;
+      --accent-hover: #6ba3ff;
+      --text: #e2e6f0;
+      --muted: #6b7280;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: -0.3px; }
+
+    /* ── Nav tabs ── */
+    .nav-tabs {
+      display: flex;
+      gap: 2px;
+      margin-left: 24px;
+    }
+    .nav-tab {
+      padding: 0 18px;
+      height: 56px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .status-dot.connected { background: var(--success); }
+    .status-dot.connecting { background: var(--warning); animation: pulse 1s infinite; }
+    .status-dot.error { background: var(--danger); }
+
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* ── Login Screen ── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 56px);
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px;
+      width: 360px;
+    }
+
+    .login-card h2 { font-size: 20px; margin-bottom: 6px; }
+    .login-card p { color: var(--muted); margin-bottom: 24px; font-size: 13px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: var(--accent); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--muted); font-size: 12px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .error-msg { color: var(--danger); font-size: 12px; margin-top: 12px; text-align: center; }
+
+    /* ── Main App ── */
+    #app-screen { display: none; }
+
+    .toolbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toolbar select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      flex: 1;
+      max-width: 300px;
+    }
+
+    .search-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      width: 220px;
+    }
+    .search-box:focus { border-color: var(--accent); }
+
+    .toolbar-right { margin-left: auto; display: flex; gap: 8px; }
+
+    /* ── Two-pane layout ── */
+    .panes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      height: calc(100vh - 56px - 57px);
+      overflow: hidden;
+    }
+
+    .pane {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
+    }
+    .pane:last-child { border-right: none; }
+
+    .pane-header {
+      padding: 14px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .pane-title { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .count-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .item-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      align-content: start;
+    }
+
+    /* ── Item Cards ── */
+    .item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    .item-card:hover { border-color: var(--accent); }
+    .item-card.selected { border-color: var(--accent); background: #1e2a44; }
+
+    .item-img {
+      width: 72px; height: 52px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .item-img-placeholder {
+      width: 72px; height: 52px;
+      background: var(--surface2);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .item-name {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.3;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .item-wear {
+      font-size: 9px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .stattrak-badge {
+      position: absolute;
+      top: 4px; left: 4px;
+      background: #c45f00;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 700;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    .select-check {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 16px; height: 16px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+    }
+    .item-card.selected .select-check {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Action bar (appears when items selected) ── */
+    .action-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+    }
+    .action-bar.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ── Loading / Empty states ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--muted);
+      gap: 12px;
+    }
+    .empty-state .icon { font-size: 40px; }
+    .empty-state p { font-size: 13px; }
+
+    .loading-spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast notifications ── */
+    #toast-container {
+      position: fixed;
+      top: 70px; right: 20px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 999;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      min-width: 220px;
+      animation: slide-in 0.2s ease;
+    }
+    .toast.success { border-color: var(--success); color: var(--success); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+    @keyframes slide-in { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Trade-up tab ── */
+    #tradeup-screen {
+      display: none;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+      flex-direction: column;
+    }
+    #tradeup-screen.active { display: flex; }
+
+    .tradeup-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      height: 100%;
+      overflow: hidden;
+    }
+    .tradeup-picker {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
+    }
+    .tradeup-picker-toolbar {
+      padding: 12px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .rarity-filter-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+    .rarity-btn {
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .rarity-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .rarity-btn.active { color: #fff !important; border-color: transparent !important; }
+    .rarity-btn[data-rarity="rarity_common_weapon"].active    { background: #b0c3d9; color: #000 !important; }
+    .rarity-btn[data-rarity="rarity_uncommon_weapon"].active  { background: #5e98d9; }
+    .rarity-btn[data-rarity="rarity_rare_weapon"].active      { background: #4b69ff; }
+    .rarity-btn[data-rarity="rarity_mythical_weapon"].active  { background: #8847ff; }
+    .rarity-btn[data-rarity="rarity_legendary_weapon"].active { background: #d32ce6; }
+
+    .tradeup-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 8px;
+      align-content: start;
+    }
+    .tradeup-item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+      transition: border-color 0.12s, background 0.12s;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
+    }
+    .tradeup-item-card:hover { border-color: var(--accent); }
+    .tradeup-item-card.selected { border-color: var(--accent); background: #1e2a44; }
+    .tradeup-item-card.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+    .tradeup-item-card .tc-img { width: 64px; height: 46px; object-fit: contain; }
+    .tradeup-item-card .tc-placeholder { width: 64px; height: 46px; background: var(--surface2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .tradeup-item-card .tc-name { font-size: 9px; color: var(--muted); text-align: center; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .tradeup-item-card .tc-wear { font-size: 8px; color: var(--muted); }
+    .tradeup-item-card .tc-float { font-size: 8px; color: var(--muted); font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+    .tradeup-item-card .tc-check { position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 9px; }
+    .tradeup-item-card.selected .tc-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .tradeup-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .tradeup-panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 13px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tradeup-slots {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .tradeup-slot {
+      background: var(--bg);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 50px;
+    }
+    .tradeup-slot.filled { border-style: solid; background: var(--surface2); }
+    .tradeup-slot.filled:hover { border-color: var(--danger); cursor: pointer; }
+    .tradeup-slot img { width: 46px; height: 33px; object-fit: contain; flex-shrink: 0; }
+    .tradeup-slot-placeholder { width: 46px; height: 33px; background: var(--border); border-radius: 4px; flex-shrink: 0; opacity: 0.3; }
+    .tradeup-slot-info { flex: 1; min-width: 0; }
+    .tradeup-slot-name { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tradeup-slot-wear { font-size: 10px; color: var(--muted); }
+    .tradeup-slot-num { font-size: 10px; color: var(--muted); flex-shrink: 0; width: 16px; text-align: right; }
+
+    .tradeup-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .tradeup-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .tradeup-stat {
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    .tradeup-stat-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+    .tradeup-stat-value { font-size: 13px; font-weight: 600; }
+    .tradeup-outputs { background: var(--bg); border-radius: 8px; padding: 8px 10px; overflow: hidden; }
+    #tradeup-outputs-list { max-height: 140px; overflow-y: auto; }
+    .tradeup-outputs-label { font-size: 10px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .tradeup-output-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 11px; }
+    .tradeup-output-item img { width: 32px; height: 23px; object-fit: contain; flex-shrink: 0; }
+    .tradeup-output-pct { color: var(--accent); font-size: 10px; font-weight: 600; margin-left: auto; flex-shrink: 0; }
+
+    /* ── Group cards ── */
+    .item-card .group-count {
+      position: absolute;
+      top: 4px; left: 4px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 20px;
+      text-align: center;
+    }
+    .item-card .group-selected-count {
+      position: absolute;
+      bottom: 26px; left: 4px;
+      background: var(--success);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 8px;
+    }
+
+    /* ── Quantity modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.15s;
+    }
+    .modal-overlay.visible { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      width: 420px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-close {
+      background: none; border: none;
+      color: var(--muted); font-size: 18px;
+      cursor: pointer; padding: 0 4px;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-subtitle { font-size: 12px; color: var(--muted); margin-top: -8px; }
+
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .qty-btn {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .qty-input {
+      width: 70px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 6px 10px;
+      font-size: 15px;
+      text-align: center;
+      outline: none;
+    }
+    .qty-input:focus { border-color: var(--accent); }
+    .qty-max-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .qty-max-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .modal-item-list {
+      overflow-y: auto;
+      max-height: 280px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+      gap: 8px;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+    }
+    .modal-item {
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 6px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: border-color 0.1s, background 0.1s;
+    }
+    .modal-item:hover { border-color: var(--accent); }
+    .modal-item.selected { border-color: var(--accent); background: #1e2a44; }
+    .modal-item img, .modal-item .mini-placeholder {
+      width: 52px; height: 38px; object-fit: contain;
+    }
+    .modal-item .mini-placeholder {
+      background: var(--surface2); border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .modal-item .mini-wear {
+      font-size: 8px; color: var(--muted); text-align: center;
+    }
+    .modal-item .mini-name {
+      font-size: 8px; color: var(--muted); text-align: center;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      width: 100%;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .modal-mode-tabs {
+      display: flex;
+      gap: 4px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+      background: var(--bg);
+    }
+    .modal-tab {
+      flex: 1;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .modal-tab.active { background: var(--surface2); color: var(--text); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div style="display:flex; align-items:center;">
+    <div class="logo">🎮 SkinTools</div>
+    <nav class="nav-tabs" id="nav-tabs" style="display:none;">
+      <button class="nav-tab active" onclick="switchTab('storage')">Storage Manager</button>
+      <button class="nav-tab" onclick="switchTab('tradeup')">Trade-Up Contracts</button>
+    </nav>
+  </div>
+  <div class="status-badge">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Disconnected</span>
+  </div>
+</header>
+
+<!-- ── Login Screen ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <h2>Sign in to Steam</h2>
+    <p>Your credentials are only sent to Steam, never stored.</p>
+
+    <!-- Saved token login -->
+    <div id="token-login-section" style="display:none;">
+      <p id="saved-account-text" style="color:var(--text); margin-bottom:16px;"></p>
+      <button class="btn btn-primary" onclick="tokenLogin()">Continue as saved account</button>
+      <div class="divider">or</div>
+    </div>
+
+    <!-- Username/password login -->
+    <div id="password-login-section">
+      <div class="form-group">
+        <label>Steam Username</label>
+        <input type="text" id="username" placeholder="your_steam_username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()" />
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+    </div>
+
+    <!-- Steam Guard -->
+    <div id="guard-section" style="display:none;">
+      <p style="color:var(--text); margin-bottom:16px;">Enter the Steam Guard code from your email or authenticator app.</p>
+      <div class="form-group">
+        <label>Steam Guard Code</label>
+        <input type="text" id="guard-code" placeholder="XXXXX" maxlength="5" style="letter-spacing:4px; text-align:center; text-transform:uppercase;" onkeydown="if(event.key==='Enter') submitGuard()" />
+      </div>
+      <button class="btn btn-primary" onclick="submitGuard()">Submit</button>
+    </div>
+
+    <div id="login-error" class="error-msg"></div>
+  </div>
+</div>
+
+<!-- ── Main App ── -->
+<div id="app-screen">
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <span style="font-size:13px; color:var(--muted);">Storage Unit:</span>
+    <select id="storage-select" onchange="loadStorageUnit()">
+      <option value="">— select a storage unit —</option>
+    </select>
+    <input class="search-box" type="text" id="search-box" placeholder="Search items..." oninput="filterItems()" />
+    <div class="toolbar-right">
+      <button class="btn btn-secondary btn-sm" onclick="refreshAll()">↻ Refresh</button>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Log out</button>
+    </div>
+  </div>
+
+  <!-- Two panes -->
+  <div class="panes">
+    <!-- Inventory pane -->
+    <div class="pane">
+      <div class="pane-header">
+        <div class="pane-title">
+          📦 Inventory
+          <span class="count-badge" id="inv-count">0</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="select-all-inv" onclick="selectAll('inv')">Select All</button>
+      </div>
+      <div class="item-grid" id="inv-grid">
+        <div class="empty-state"><div class="loading-spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Storage unit pane -->
+    <div class="pane">
+      <div class="pane-header">
+        <div class="pane-title">
+          🗃️ Storage Unit
+          <span class="count-badge" id="storage-count">0</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="select-all-storage" onclick="selectAll('storage')">Select All</button>
+      </div>
+      <div class="item-grid" id="storage-grid">
+        <div class="empty-state">
+          <div class="icon">🗃️</div>
+          <p>Select a storage unit above</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Action Bar ── -->
+<div class="action-bar" id="action-bar">
+  <span id="action-label" style="color:var(--muted); font-size:13px;">0 items selected</span>
+  <button class="btn btn-primary btn-sm" id="move-to-storage-btn" onclick="moveSelected('toStorage')">→ Move to Storage</button>
+  <button class="btn btn-secondary btn-sm" id="move-to-inv-btn" onclick="moveSelected('toInventory')">← Move to Inventory</button>
+  <button class="btn btn-secondary btn-sm" onclick="clearSelection()">✕ Clear</button>
+</div>
+
+<!-- ── Values Screen ── -->
+
+<!-- ── Trade-up Result Modal ── -->
+<div class="modal-overlay" id="tradeup-result-overlay" onclick="closeTradeupResult()">
+  <div class="modal" onclick="event.stopPropagation()" style="width:320px;text-align:center;">
+    <div class="modal-title" style="justify-content:center;">
+      <span>Trade-Up Complete!</span>
+    </div>
+    <div id="tradeup-result-img"></div>
+    <div id="tradeup-result-name" style="font-size:15px;font-weight:600;margin-bottom:4px;"></div>
+    <div id="tradeup-result-wear" style="font-size:13px;color:var(--muted);"></div>
+    <div id="tradeup-result-float" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+    <div id="tradeup-result-st" style="font-size:11px;color:#c45f00;margin-top:4px;"></div>
+    <button class="btn btn-primary" style="margin-top:16px;width:100%;" onclick="closeTradeupResult()">Nice!</button>
+  </div>
+</div>
+
+<!-- ── Random Trade-Up Config Modal ── -->
+<div class="modal-overlay" id="random-tradeup-overlay" onclick="closeRandomModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="width:340px;">
+    <div class="modal-title">
+      <span>🎲 Random Trade-Ups</span>
+      <button class="modal-close" onclick="closeRandomModal()">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;padding:4px 0;">
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Number of trade-ups <span id="random-max-label" style="color:var(--accent);"></span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="range" id="random-count-slider" min="1" max="1" value="1"
+            style="flex:1;accent-color:var(--accent);"
+            oninput="document.getElementById('random-count-num').value=this.value">
+          <input type="number" id="random-count-num" min="1" max="1" value="1"
+            style="width:56px;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;text-align:center;"
+            oninput="syncRandomSlider(this.value)">
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;">
+        <input type="checkbox" id="random-show-results" checked
+          style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+        Show results after each trade-up
+      </label>
+      <div id="random-results-note" style="font-size:11px;color:var(--muted);margin-top:-8px;padding-left:26px;">
+        All outcomes will be shown on one screen when done.
+      </div>
+    </div>
+    <div class="modal-footer" style="margin-top:8px;">
+      <button class="btn btn-secondary" onclick="closeRandomModal()">Cancel</button>
+      <button class="btn btn-primary" id="random-go-btn" onclick="runRandomTradeups()">Go!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Random Trade-Up Results Modal ── -->
+<div class="modal-overlay" id="random-results-overlay" onclick="if(event.target===this)closeRandomResults()">
+  <div class="modal" onclick="event.stopPropagation()" style="width:520px;max-width:95vw;">
+    <div class="modal-title">
+      <span id="random-results-title">Trade-Up Results</span>
+      <button class="modal-close" onclick="closeRandomResults()">✕</button>
+    </div>
+    <div id="random-results-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;max-height:60vh;overflow-y:auto;padding:4px 0;"></div>
+    <div class="modal-footer" style="margin-top:8px;">
+      <button class="btn btn-primary" style="width:100%;" onclick="closeRandomResults()">Nice!</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ── Trade-Up Screen ── -->
+<div id="tradeup-screen">
+  <div class="tradeup-layout">
+    <!-- Left: skin picker -->
+    <div class="tradeup-picker">
+      <div class="tradeup-picker-toolbar">
+        <div class="rarity-filter-btns" id="rarity-filter-btns">
+          <button class="rarity-btn active" data-rarity="rarity_common_weapon"    onclick="setTradeupRarity('rarity_common_weapon')">Consumer</button>
+          <button class="rarity-btn"        data-rarity="rarity_uncommon_weapon"  onclick="setTradeupRarity('rarity_uncommon_weapon')">Industrial</button>
+          <button class="rarity-btn"        data-rarity="rarity_rare_weapon"      onclick="setTradeupRarity('rarity_rare_weapon')">Mil-Spec</button>
+          <button class="rarity-btn"        data-rarity="rarity_mythical_weapon"  onclick="setTradeupRarity('rarity_mythical_weapon')">Restricted</button>
+          <button class="rarity-btn"        data-rarity="rarity_legendary_weapon" onclick="setTradeupRarity('rarity_legendary_weapon')">Classified</button>
+        </div>
+        <input class="search-box" style="width:160px;" type="text" id="tradeup-search" placeholder="Search…" oninput="renderTradeupGrid()" />
+        <button class="btn btn-secondary btn-sm" id="tradeup-st-toggle" onclick="toggleTradeupST()" style="white-space:nowrap;">Regular</button>
+      </div>
+      <div class="tradeup-grid" id="tradeup-grid">
+        <div class="empty-state"><div class="loading-spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Right: contract panel -->
+    <div class="tradeup-panel">
+      <div class="tradeup-panel-header">
+        <span>Contract <span id="tradeup-slot-count" style="color:var(--muted); font-weight:400;">0/10</span></span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="randomTradeup()" title="Fill with 10 random items from current rarity">🎲 Random</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearTradeupSlots()">Clear</button>
+        </div>
+      </div>
+      <div class="tradeup-slots" id="tradeup-slots"></div>
+      <div class="tradeup-footer">
+        <div class="tradeup-stats">
+          <div class="tradeup-stat">
+            <div class="tradeup-stat-label">Avg Float</div>
+            <div class="tradeup-stat-value" id="tradeup-avg-float">—</div>
+          </div>
+          <div class="tradeup-stat">
+            <div class="tradeup-stat-label">Output Float Range</div>
+            <div class="tradeup-stat-value" id="tradeup-float-range">—</div>
+          </div>
+        </div>
+        <div class="tradeup-outputs" id="tradeup-outputs-panel">
+          <div class="tradeup-outputs-label">Possible Outputs</div>
+          <div id="tradeup-outputs-list" style="color:var(--muted); font-size:11px;">Select 10 skins to see outputs</div>
+        </div>
+        <button class="btn btn-primary" id="tradeup-execute-btn" onclick="executeTradeup()" disabled style="opacity:0.5;">Execute Trade-Up</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Quantity / Item Picker Modal ── -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">
+      <span id="modal-title-text">Select items</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-subtitle" id="modal-subtitle"></div>
+
+    <div class="modal-mode-tabs">
+      <button class="modal-tab active" id="tab-qty" onclick="setModalMode('qty')">Quantity</button>
+      <button class="modal-tab" id="tab-pick" onclick="setModalMode('pick')">Pick specific</button>
+    </div>
+
+    <!-- Quantity mode -->
+    <div id="modal-qty-section">
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="adjustQty(-1)">−</button>
+        <input class="qty-input" type="number" id="modal-qty" min="1" value="1" oninput="clampQty()" />
+        <button class="qty-btn" onclick="adjustQty(1)">+</button>
+        <button class="qty-max-btn" onclick="setMaxQty()">Max</button>
+      </div>
+    </div>
+
+    <!-- Pick specific mode -->
+    <div id="modal-pick-section" style="display:none;">
+      <div class="modal-item-list" id="modal-item-list"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="modal-confirm-btn" onclick="confirmModal()">Move to Storage</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let inventoryItems = [];
+let storageItems = [];
+let selectedInv = new Set();     // item ids selected in inventory
+let selectedStorage = new Set(); // item ids selected in storage
+let currentCasketId = null;
+let statusPollInterval = null;
+
+// Modal state
+let modalGroup = null;   // { items: [...], pane: 'inv'|'storage' }
+let modalMode = 'qty';
+let modalPickSelected = new Set();
+
+function wearLabel(wear) {
+  if (wear === null || wear === undefined) return '';
+  if (wear < 0.07) return 'FN';
+  if (wear < 0.15) return 'MW';
+  if (wear < 0.38) return 'FT';
+  if (wear < 0.45) return 'WW';
+  return 'BS';
+}
+
+function itemName(item) {
+  return item.name || (item.casketCount !== null ? `Storage Unit` : `Unknown Item`);
+}
+
+// ── Grouping ──────────────────────────────────────────────────────────────────
+function groupKey(item) {
+  const name = itemName(item);
+  const wear = wearLabel(item.paintwear);
+  const st = item.stattrak ? '__ST' : '';
+  return wear ? `${name}__${wear}${st}` : `${name}${st}`;
+}
+
+function groupItems(items) {
+  const map = new Map();
+  for (const item of items) {
+    const key = groupKey(item);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(item);
+  }
+  return map;
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ── Status polling ────────────────────────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const r = await fetch('/api/auth/status');
+    const data = await r.json();
+    updateStatusUI(data.status);
+
+    if (data.status === 'connected') {
+      stopPolling();
+      showApp();
+      loadInventory();
+    } else if (data.status === 'steamguard') {
+      showGuard();
+    } else if (data.status.startsWith('error:')) {
+      stopPolling();
+      showLoginError(data.status.replace('error:', ''));
+    }
+  } catch {}
+}
+
+function startPolling() {
+  if (statusPollInterval) return;
+  statusPollInterval = setInterval(pollStatus, 1000);
+}
+
+function stopPolling() {
+  clearInterval(statusPollInterval);
+  statusPollInterval = null;
+}
+
+function updateStatusUI(status) {
+  const dot = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  dot.className = 'status-dot';
+  if (status === 'connected') {
+    dot.classList.add('connected');
+    text.textContent = 'Connected to CS2 GC';
+  } else if (status === 'connecting') {
+    dot.classList.add('connecting');
+    text.textContent = 'Connecting…';
+  } else if (status === 'steamguard') {
+    dot.classList.add('connecting');
+    text.textContent = 'Steam Guard required';
+  } else if (status.startsWith('error:')) {
+    dot.classList.add('error');
+    text.textContent = 'Error';
+  } else {
+    text.textContent = 'Disconnected';
+  }
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function checkInitialStatus() {
+  const r = await fetch('/api/auth/status');
+  const data = await r.json();
+  updateStatusUI(data.status);
+
+  if (data.status === 'connected') {
+    showApp();
+    loadInventory();
+    return;
+  }
+
+  if (data.hasSavedToken) {
+    document.getElementById('token-login-section').style.display = 'block';
+    document.getElementById('saved-account-text').textContent =
+      `Continue as: ${data.savedAccountName}`;
+  }
+
+  if (data.status === 'connecting') {
+    startPolling();
+  }
+}
+
+async function doLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  if (!username || !password) return showLoginError('Enter username and password');
+
+  document.getElementById('login-error').textContent = '';
+  const r = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (r.ok) {
+    updateStatusUI('connecting');
+    startPolling();
+  } else {
+    const d = await r.json();
+    showLoginError(d.error);
+  }
+}
+
+async function tokenLogin() {
+  const r = await fetch('/api/auth/token-login', { method: 'POST' });
+  if (r.ok) {
+    updateStatusUI('connecting');
+    startPolling();
+  } else {
+    const d = await r.json();
+    showLoginError(d.error);
+  }
+}
+
+async function submitGuard() {
+  const code = document.getElementById('guard-code').value.trim().toUpperCase();
+  if (!code) return;
+  const r = await fetch('/api/auth/guard', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  });
+  if (r.ok) {
+    document.getElementById('guard-section').style.display = 'none';
+    document.getElementById('password-login-section').style.display = 'block';
+    updateStatusUI('connecting');
+  }
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  location.reload();
+}
+
+function showGuard() {
+  document.getElementById('password-login-section').style.display = 'none';
+  document.getElementById('token-login-section').style.display = 'none';
+  document.getElementById('guard-section').style.display = 'block';
+}
+
+function showLoginError(msg) {
+  document.getElementById('login-error').textContent = msg;
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('nav-tabs').style.display = 'flex';
+}
+
+// ── Inventory & Storage ───────────────────────────────────────────────────────
+async function loadInventory() {
+  document.getElementById('inv-grid').innerHTML = '<div class="empty-state"><div class="loading-spinner"></div></div>';
+
+  const r = await fetch('/api/inventory');
+  if (!r.ok) { toast('Failed to load inventory', 'error'); return; }
+  const data = await r.json();
+
+  inventoryItems = data.inventory;
+
+  const sel = document.getElementById('storage-select');
+  sel.innerHTML = '<option value="">— select a storage unit —</option>';
+  data.storageUnits.forEach(su => {
+    const opt = document.createElement('option');
+    opt.value = su.id;
+    opt.textContent = su.customName || `Storage Unit (${su.casketCount ?? '?'} items)`;
+    sel.appendChild(opt);
+  });
+
+  renderInventory();
+}
+
+async function loadStorageUnit() {
+  const sel = document.getElementById('storage-select');
+  currentCasketId = sel.value || null;
+  if (!currentCasketId) {
+    storageItems = [];
+    renderStorage();
+    return;
+  }
+
+  document.getElementById('storage-grid').innerHTML = '<div class="empty-state"><div class="loading-spinner"></div></div>';
+  const r = await fetch(`/api/storage/${currentCasketId}`);
+  if (!r.ok) { toast('Failed to load storage unit', 'error'); return; }
+  const data = await r.json();
+  storageItems = data.items;
+  selectedStorage.clear();
+  renderStorage();
+}
+
+async function refreshAll() {
+  selectedInv.clear();
+  selectedStorage.clear();
+  updateActionBar();
+  await fetch('/api/refresh-web-inventory', { method: 'POST' });
+  await loadInventory();
+  if (currentCasketId) {
+    document.getElementById('storage-select').value = currentCasketId;
+    await loadStorageUnit();
+  }
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+function getSearchQuery() {
+  return document.getElementById('search-box').value.toLowerCase();
+}
+
+function filterItems() {
+  renderInventory();
+  renderStorage();
+}
+
+function renderInventory() {
+  const q = getSearchQuery();
+  const items = inventoryItems.filter(i => !q || itemName(i).toLowerCase().includes(q));
+  document.getElementById('inv-count').textContent = items.length;
+  const grid = document.getElementById('inv-grid');
+  grid.innerHTML = '';
+  if (!items.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">📦</div><p>No items</p></div>';
+    return;
+  }
+  const groups = groupItems(items);
+  groups.forEach((groupItems, key) => {
+    grid.appendChild(makeGroupCard(groupItems, 'inv'));
+  });
+}
+
+function renderStorage() {
+  const q = getSearchQuery();
+  const items = storageItems.filter(i => !q || itemName(i).toLowerCase().includes(q));
+  document.getElementById('storage-count').textContent = items.length;
+  const grid = document.getElementById('storage-grid');
+  grid.innerHTML = '';
+  if (!currentCasketId) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">🗃️</div><p>Select a storage unit above</p></div>';
+    return;
+  }
+  if (!items.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>Storage unit is empty</p></div>';
+    return;
+  }
+  const groups = groupItems(items);
+  groups.forEach((groupItems, key) => {
+    grid.appendChild(makeGroupCard(groupItems, 'storage'));
+  });
+}
+
+function makeGroupCard(items, pane) {
+  const first = items[0];
+  const count = items.length;
+  const selectedSet = pane === 'inv' ? selectedInv : selectedStorage;
+  const selectedCount = items.filter(i => selectedSet.has(i.id)).length;
+  const allSelected = selectedCount === count;
+
+  const card = document.createElement('div');
+  card.className = 'item-card' + (selectedCount > 0 ? ' selected' : '');
+
+  const wear = wearLabel(first.paintwear);
+  const name = itemName(first);
+
+  const imgHtml = first.iconUrl
+    ? `<img class="item-img" src="${first.iconUrl}" alt="${name}" loading="lazy" onerror="this.outerHTML='<div class=\'item-img-placeholder\'>🔫</div>'">`
+    : `<div class="item-img-placeholder">🔫</div>`;
+
+  card.innerHTML = `
+    ${count > 1 ? `<div class="group-count">×${count}</div>` : ''}
+    ${selectedCount > 0 && count > 1 ? `<div class="group-selected-count">${selectedCount} selected</div>` : ''}
+    <div class="select-check">${allSelected ? '✓' : selectedCount > 0 ? '~' : ''}</div>
+    ${first.stattrak ? '<div class="stattrak-badge">ST</div>' : ''}
+    ${imgHtml}
+    <div class="item-name">${name}${first.customName ? `<br><em style="color:var(--accent)">${first.customName}</em>` : ''}</div>
+    ${wear ? `<div class="item-wear">${wear} · ${first.paintwear ?? "" ?? ''}</div>` : ''}
+  `;
+
+  card.onclick = () => handleGroupClick(items, pane);
+  return card;
+}
+
+function handleGroupClick(items, pane) {
+  // Single item — just toggle directly
+  if (items.length === 1) {
+    toggleSelect(items[0].id, pane);
+    return;
+  }
+  // Multiple items — open modal
+  openModal(items, pane);
+}
+
+// ── Selection ─────────────────────────────────────────────────────────────────
+function toggleSelect(id, pane) {
+  const set = pane === 'inv' ? selectedInv : selectedStorage;
+  if (set.has(id)) set.delete(id); else set.add(id);
+  if (pane === 'inv') renderInventory(); else renderStorage();
+  updateActionBar();
+}
+
+function selectAll(pane) {
+  if (pane === 'inv') {
+    if (selectedInv.size === inventoryItems.length) selectedInv.clear();
+    else inventoryItems.forEach(i => selectedInv.add(i.id));
+    renderInventory();
+  } else {
+    if (selectedStorage.size === storageItems.length) selectedStorage.clear();
+    else storageItems.forEach(i => selectedStorage.add(i.id));
+    renderStorage();
+  }
+  updateActionBar();
+}
+
+function clearSelection() {
+  selectedInv.clear();
+  selectedStorage.clear();
+  renderInventory();
+  renderStorage();
+  updateActionBar();
+}
+
+function updateActionBar() {
+  const bar = document.getElementById('action-bar');
+  const total = selectedInv.size + selectedStorage.size;
+  const label = document.getElementById('action-label');
+  const toStorageBtn = document.getElementById('move-to-storage-btn');
+  const toInvBtn = document.getElementById('move-to-inv-btn');
+
+  label.textContent = `${total} item${total !== 1 ? 's' : ''} selected`;
+  toStorageBtn.style.display = selectedInv.size > 0 ? 'inline-flex' : 'none';
+  toInvBtn.style.display = selectedStorage.size > 0 ? 'inline-flex' : 'none';
+
+  bar.classList.toggle('visible', total > 0);
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal(items, pane) {
+  modalGroup = { items, pane };
+  modalPickSelected = new Set();
+  const name = itemName(items[0]);
+  const wear = wearLabel(items[0].paintwear);
+
+  document.getElementById('modal-title-text').textContent = name;
+  document.getElementById('modal-subtitle').textContent =
+    `${wear ? wear + ' · ' : ''}${items.length} in ${pane === 'inv' ? 'inventory' : 'storage'}`;
+  document.getElementById('modal-confirm-btn').textContent =
+    pane === 'inv' ? '→ Move to Storage' : '← Move to Inventory';
+
+  const qtyInput = document.getElementById('modal-qty');
+  qtyInput.value = 1;
+  qtyInput.max = items.length;
+
+  setModalMode('qty');
+  document.getElementById('modal-overlay').classList.add('visible');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('visible');
+  modalGroup = null;
+}
+
+function setModalMode(mode) {
+  modalMode = mode;
+  document.getElementById('tab-qty').classList.toggle('active', mode === 'qty');
+  document.getElementById('tab-pick').classList.toggle('active', mode === 'pick');
+  document.getElementById('modal-qty-section').style.display = mode === 'qty' ? '' : 'none';
+  document.getElementById('modal-pick-section').style.display = mode === 'pick' ? '' : 'none';
+
+  if (mode === 'pick') renderModalItems();
+}
+
+function renderModalItems() {
+  const list = document.getElementById('modal-item-list');
+  list.innerHTML = '';
+  if (!modalGroup) return;
+
+  for (const item of modalGroup.items) {
+    const el = document.createElement('div');
+    const sel = modalPickSelected.has(item.id);
+    el.className = 'modal-item' + (sel ? ' selected' : '');
+    const wear = wearLabel(item.paintwear);
+    const imgHtml = item.iconUrl
+      ? `<img src="${item.iconUrl}" loading="lazy" onerror="this.outerHTML='<div class=\'mini-placeholder\'>🔫</div>'">`
+      : `<div class="mini-placeholder">🔫</div>`;
+    el.innerHTML = `${imgHtml}${wear ? `<div class="mini-wear">${wear} ${item.paintwear ?? "" ?? ''}</div>` : ''}<div class="mini-name">#${item.id.slice(-4)}</div>`;
+    el.onclick = () => {
+      if (modalPickSelected.has(item.id)) modalPickSelected.delete(item.id);
+      else modalPickSelected.add(item.id);
+      renderModalItems();
+    };
+    list.appendChild(el);
+  }
+}
+
+function adjustQty(delta) {
+  const input = document.getElementById('modal-qty');
+  const max = modalGroup ? modalGroup.items.length : 1;
+  input.value = Math.max(1, Math.min(max, (parseInt(input.value) || 0) + delta));
+}
+
+function clampQty() {
+  const input = document.getElementById('modal-qty');
+  const max = modalGroup ? modalGroup.items.length : 1;
+  if (parseInt(input.value) > max) input.value = max;
+  if (parseInt(input.value) < 1) input.value = 1;
+}
+
+function setMaxQty() {
+  document.getElementById('modal-qty').value = modalGroup ? modalGroup.items.length : 1;
+}
+
+function confirmModal() {
+  if (!modalGroup) return;
+  const { items, pane } = modalGroup;
+  const set = pane === 'inv' ? selectedInv : selectedStorage;
+
+  let toSelect;
+  if (modalMode === 'qty') {
+    const qty = Math.max(1, Math.min(items.length, parseInt(document.getElementById('modal-qty').value) || 1));
+    toSelect = items.slice(0, qty).map(i => i.id);
+  } else {
+    toSelect = [...modalPickSelected];
+  }
+
+  // Toggle: if all already selected, deselect; otherwise add
+  const allAlready = toSelect.every(id => set.has(id));
+  toSelect.forEach(id => allAlready ? set.delete(id) : set.add(id));
+
+  document.getElementById('modal-overlay').classList.remove('visible');
+  modalGroup = null;
+
+  if (pane === 'inv') renderInventory(); else renderStorage();
+  updateActionBar();
+}
+
+// ── Moving items ──────────────────────────────────────────────────────────────
+async function moveSelected(direction) {
+  if (!currentCasketId) {
+    toast('Select a storage unit first', 'error');
+    return;
+  }
+
+  if (direction === 'toStorage' && selectedInv.size > 0) {
+    const ids = [...selectedInv];
+    const r = await fetch(`/api/storage/${currentCasketId}/add-bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemIds: ids }),
+    });
+    if (r.ok) {
+      toast(`Moving ${ids.length} item${ids.length !== 1 ? 's' : ''} to storage…`);
+      selectedInv.clear();
+      setTimeout(refreshAll, ids.length * 300 + 1000);
+    } else {
+      toast('Failed to move items', 'error');
+    }
+  }
+
+  if (direction === 'toInventory' && selectedStorage.size > 0) {
+    const ids = [...selectedStorage];
+    const r = await fetch(`/api/storage/${currentCasketId}/remove-bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemIds: ids }),
+    });
+    if (r.ok) {
+      toast(`Moving ${ids.length} item${ids.length !== 1 ? 's' : ''} to inventory…`);
+      selectedStorage.clear();
+      setTimeout(refreshAll, ids.length * 300 + 1000);
+    } else {
+      toast('Failed to move items', 'error');
+    }
+  }
+
+  updateActionBar();
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+let currentTab = 'storage';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-tab').forEach((el, i) => {
+    el.classList.toggle('active', (i === 0 && tab === 'storage') || (i === 1 && tab === 'tradeup'));
+  });
+  document.getElementById('app-screen').style.display    = tab === 'storage' ? 'block' : 'none';
+  document.getElementById('tradeup-screen').classList.toggle('active', tab === 'tradeup');
+  document.getElementById('action-bar').style.display    = tab === 'storage' ? '' : 'none';
+  if (tab === 'tradeup' && !tradeupLoaded) loadTradeupItems();
+}
+
+// ── Trade-up ──────────────────────────────────────────────────────────────────
+let tradeupLoaded = false;
+let tradeupAllItems = [];
+let tradeupRarity = 'rarity_common_weapon';
+let tradeupStatTrak = false;
+let tradeupSlots = [];
+let tradeupOutputs = [];
+
+const RARITY_ORDER = [
+  'rarity_common_weapon',
+  'rarity_uncommon_weapon',
+  'rarity_rare_weapon',
+  'rarity_mythical_weapon',
+  'rarity_legendary_weapon',
+  'rarity_ancient_weapon',
+];
+
+async function loadTradeupItems() {
+  tradeupLoaded = true;
+  document.getElementById('tradeup-grid').innerHTML = '<div class="empty-state"><div class="loading-spinner"></div></div>';
+  const r = await fetch('/api/tradeup/eligible');
+  if (!r.ok) { document.getElementById('tradeup-grid').innerHTML = '<div class="empty-state"><p>Failed to load items</p></div>'; return; }
+  const data = await r.json();
+  tradeupAllItems = data.items;
+  renderTradeupGrid();
+}
+
+function toggleTradeupST() {
+  if (tradeupSlots.length > 0) { toast('Clear the contract first before switching StatTrak', 'error'); return; }
+  tradeupStatTrak = !tradeupStatTrak;
+  const btn = document.getElementById('tradeup-st-toggle');
+  btn.textContent = tradeupStatTrak ? '★ StatTrak' : 'Regular';
+  btn.style.borderColor = tradeupStatTrak ? '#c45f00' : '';
+  btn.style.color = tradeupStatTrak ? '#c45f00' : '';
+  renderTradeupGrid();
+}
+
+function setTradeupRarity(rarity) {
+  // Don't allow changing rarity if slots have items (would invalidate them)
+  if (tradeupSlots.length > 0) {
+    toast('Clear the contract first before changing rarity', 'error');
+    return;
+  }
+  tradeupRarity = rarity;
+  document.querySelectorAll('.rarity-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.rarity === rarity);
+  });
+  renderTradeupGrid();
+}
+
+function renderTradeupGrid() {
+  const q = document.getElementById('tradeup-search').value.toLowerCase();
+  const items = tradeupAllItems.filter(i => {
+    if (i.rarity !== tradeupRarity) return false;
+    if (i.stattrak !== tradeupStatTrak) return false;
+    if (q && !i.name?.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const grid = document.getElementById('tradeup-grid');
+  grid.innerHTML = '';
+
+  if (!items.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="icon">🔫</div><p>No ${rarityLabel(tradeupRarity)} skins in inventory</p></div>`;
+    return;
+  }
+
+  // Group by name+wear for display, but each card can hold multiple items
+  const groups = new Map();
+  for (const item of items) {
+    const key = `${item.name}__${wearLabel(item.paintwear)}__${item.stattrak}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+
+  groups.forEach((groupItems) => {
+    const selectedCount = groupItems.filter(i => tradeupSlots.some(s => s.id === i.id)).length;
+    const allSelected = selectedCount === groupItems.length;
+    const card = document.createElement('div');
+    const isDisabled = tradeupSlots.length >= 10 && selectedCount === 0;
+    card.className = 'tradeup-item-card' + (selectedCount > 0 ? ' selected' : '') + (isDisabled ? ' disabled' : '');
+
+    const first = groupItems[0];
+    const wear = wearLabel(first.paintwear);
+    const imgHtml = first.iconUrl
+      ? `<img class="tc-img" src="${first.iconUrl}" loading="lazy" onerror="this.outerHTML='<div class=\'tc-placeholder\'>🔫</div>'">`
+      : `<div class="tc-placeholder">🔫</div>`;
+    const countBadge = groupItems.length > 1 ? `<div style="position:absolute;top:3px;left:3px;background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;">×${groupItems.length}</div>` : '';
+    const selBadge = selectedCount > 0 && groupItems.length > 1 ? `<div style="position:absolute;bottom:22px;left:3px;background:var(--success);color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:6px;">${selectedCount}</div>` : '';
+
+    card.innerHTML = `
+      ${countBadge}${selBadge}
+      <div class="tc-check">${allSelected ? '✓' : selectedCount > 0 ? '~' : ''}</div>
+      ${first.stattrak ? '<div class="stattrak-badge">ST</div>' : ''}
+      ${imgHtml}
+      <div class="tc-name">${first.name || 'Unknown'}</div>
+      ${wear ? `<div class="tc-wear">${wear}</div>` : ''}
+      ${groupItems.length === 1 ? `<div class="tc-float">${first.paintwear ?? ''}</div>` : `<div class="tc-float" style="color:var(--accent)">×${groupItems.length} — click to pick</div>`}
+    `;
+    card.onclick = () => groupItems.length > 1 ? showTradeupPicker(groupItems) : handleTradeupCardClick(groupItems);
+    grid.appendChild(card);
+  });
+}
+
+function handleTradeupCardClick(items) {
+  // If any from this group are already in slots, remove them all
+  const inSlots = items.filter(i => tradeupSlots.some(s => s.id === i.id));
+  if (inSlots.length > 0) {
+    tradeupSlots = tradeupSlots.filter(s => !items.some(i => i.id === s.id));
+  } else {
+    // Add as many as fit (up to 10 total)
+    for (const item of items) {
+      if (tradeupSlots.length >= 10) break;
+      tradeupSlots.push(item);
+    }
+  }
+  renderTradeupGrid();
+  renderTradeupPanel();
+}
+
+function showTradeupPicker(groupItems) {
+  // Remove any existing picker
+  document.getElementById('tradeup-picker-modal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'tradeup-picker-modal';
+  modal.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;`;
+
+  const first = groupItems[0];
+  const imgHtml = first.iconUrl
+    ? `<img src="${first.iconUrl}" style="width:64px;height:40px;object-fit:contain;" onerror="this.outerHTML='🔫'">`
+    : '🔫';
+
+  const rows = groupItems.map(item => {
+    const inSlot = tradeupSlots.some(s => s.id === item.id);
+    return `
+      <div class="picker-row ${inSlot ? 'picker-row-selected' : ''}" data-id="${item.id}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-radius:6px;border:1px solid ${inSlot ? 'var(--accent)' : 'var(--border)'};margin-bottom:6px;background:${inSlot ? 'rgba(99,102,241,0.15)' : 'var(--surface)'};transition:all 0.15s;">
+        <div style="width:14px;height:14px;border-radius:50%;background:${inSlot ? 'var(--accent)' : 'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0;">${inSlot ? '✓' : ''}</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--muted);">${wearLabel(item.paintwear)}</div>
+          <div style="font-size:10px;font-family:monospace;color:${inSlot ? 'var(--accent)' : 'var(--text)'};">${item.paintwear ?? ''}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  modal.innerHTML = `
+    <div style="background:var(--surface-2,#1e1e2e);border:1px solid var(--border);border-radius:12px;padding:20px;width:320px;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        ${imgHtml}
+        <div>
+          <div style="font-weight:600;font-size:13px;">${first.name}</div>
+          <div style="font-size:11px;color:var(--muted);">${groupItems.length} items — select to add/remove</div>
+        </div>
+        <button onclick="document.getElementById('tradeup-picker-modal').remove()" style="margin-left:auto;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;">✕</button>
+      </div>
+      <div id="picker-rows">${rows}</div>
+      <button onclick="document.getElementById('tradeup-picker-modal').remove()" style="width:100%;margin-top:12px;padding:8px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;">Done</button>
+    </div>`;
+
+  // Click on a row toggles that item
+  modal.querySelectorAll('.picker-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = row.dataset.id;
+      const item = groupItems.find(i => i.id === id);
+      if (!item) return;
+      const idx = tradeupSlots.findIndex(s => s.id === id);
+      if (idx >= 0) {
+        tradeupSlots.splice(idx, 1);
+      } else {
+        if (tradeupSlots.length >= 10) return;
+        tradeupSlots.push(item);
+      }
+      renderTradeupGrid();
+      renderTradeupPanel();
+      // Refresh picker rows in place
+      const inSlot = tradeupSlots.some(s => s.id === id);
+      row.style.border = `1px solid ${inSlot ? 'var(--accent)' : 'var(--border)'}`;
+      row.style.background = inSlot ? 'rgba(99,102,241,0.15)' : 'var(--surface)';
+      row.classList.toggle('picker-row-selected', inSlot);
+      const dot = row.querySelector('div');
+      dot.style.background = inSlot ? 'var(--accent)' : 'var(--border)';
+      dot.textContent = inSlot ? '✓' : '';
+      const floatEl = row.querySelectorAll('div')[2];
+      if (floatEl) floatEl.style.color = inSlot ? 'var(--accent)' : 'var(--text)';
+    });
+  });
+
+  // Close on backdrop click
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+function randomTradeup() {
+  const eligible = tradeupAllItems.filter(i =>
+    i.rarity === tradeupRarity && i.stattrak === tradeupStatTrak
+  );
+  const maxRuns = Math.floor(eligible.length / 10);
+  if (maxRuns < 1) {
+    toast(`Not enough ${rarityLabel(tradeupRarity)} items for a random trade-up (need 10, have ${eligible.length})`, 'error');
+    return;
+  }
+  const slider = document.getElementById('random-count-slider');
+  const numInput = document.getElementById('random-count-num');
+  slider.max = maxRuns;
+  numInput.max = maxRuns;
+  slider.value = 1;
+  numInput.value = 1;
+  document.getElementById('random-max-label').textContent = `(max ${maxRuns})`;
+  document.getElementById('random-tradeup-overlay').classList.add('visible');
+}
+
+function syncRandomSlider(val) {
+  const slider = document.getElementById('random-count-slider');
+  const clamped = Math.max(1, Math.min(parseInt(val) || 1, parseInt(slider.max)));
+  slider.value = clamped;
+  document.getElementById('random-count-num').value = clamped;
+}
+
+function closeRandomModal() {
+  document.getElementById('random-tradeup-overlay').classList.remove('visible');
+}
+
+function closeRandomResults() {
+  document.getElementById('random-results-overlay').classList.remove('visible');
+}
+
+function pickRandomSlots(eligible) {
+  // Returns 10 unique items from eligible pool (each item can only be used once across all runs)
+  const pool = [...eligible];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.splice(0, 10);
+}
+
+async function runRandomTradeups() {
+  const count = parseInt(document.getElementById('random-count-num').value) || 1;
+  const showResults = document.getElementById('random-show-results').checked;
+  closeRandomModal();
+
+  const goBtn = document.getElementById('random-go-btn');
+
+  // Build non-overlapping batches upfront using shuffled eligible pool
+  const eligible = tradeupAllItems.filter(i =>
+    i.rarity === tradeupRarity && i.stattrak === tradeupStatTrak
+  );
+  const pool = [...eligible];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const batches = [];
+  for (let b = 0; b < count; b++) {
+    batches.push(pool.splice(0, 10));
+  }
+
+  // If only 1 run, just fill the slots so the user can review before executing
+  if (count === 1) {
+    tradeupSlots = batches[0];
+    renderTradeupGrid();
+    renderTradeupPanel();
+    return;
+  }
+
+  const results = [];
+  for (let b = 0; b < batches.length; b++) {
+    const slots = batches[b];
+    toast(`Running trade-up ${b + 1} of ${count}…`);
+
+    const r = await fetch('/api/tradeup/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemIds: slots.map(i => i.id), rarity: tradeupRarity }),
+    });
+
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      toast(`Trade-up ${b + 1} failed: ${err.error || 'unknown error'}`, 'error');
+      break;
+    }
+
+    const data = await r.json();
+    results.push(data.newItemIds?.[0] || null);
+  }
+
+  // Reload inventory once after all runs
+  tradeupLoaded = false;
+  await loadInventory();
+  await loadTradeupItems();
+  tradeupSlots = [];
+  renderTradeupPanel();
+
+  if (!showResults) {
+    toast(`✅ ${results.length} trade-up${results.length !== 1 ? 's' : ''} complete!`);
+    return;
+  }
+
+  // Build results screen
+  const grid = document.getElementById('random-results-grid');
+  grid.innerHTML = '';
+  document.getElementById('random-results-title').textContent = `${results.length} Trade-Up${results.length !== 1 ? 's' : ''} Complete!`;
+
+  for (const newId of results) {
+    const item = newId ? inventoryItems.find(i => i.id === newId) : null;
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--surface2);border-radius:8px;padding:10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;';
+    if (item) {
+      const wear = wearLabel(item.paintwear);
+      const imgHtml = item.iconUrl
+        ? `<img src="${item.iconUrl}" style="width:90px;height:65px;object-fit:contain;">`
+        : `<div style="width:90px;height:65px;background:var(--surface);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:28px;">🔫</div>`;
+      card.innerHTML = `
+        ${imgHtml}
+        <div style="font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;">${item.name}</div>
+        <div style="font-size:10px;color:var(--muted);">${wear}</div>
+        <div style="font-size:9px;color:var(--muted);font-family:monospace;">${item.paintwear != null ? String(item.paintwear) : ''}</div>
+        ${item.stattrak ? '<div style="font-size:10px;color:#c45f00;">★ StatTrak™</div>' : ''}
+      `;
+    } else {
+      card.innerHTML = `<div style="font-size:11px;color:var(--muted);">Unknown result</div>`;
+    }
+    grid.appendChild(card);
+  }
+
+  document.getElementById('random-results-overlay').classList.add('visible');
+}
+
+
+function clearTradeupSlots() {
+  tradeupSlots = [];
+  renderTradeupGrid();
+  renderTradeupPanel();
+}
+
+function removeTradeupSlot(index) {
+  tradeupSlots.splice(index, 1);
+  renderTradeupGrid();
+  renderTradeupPanel();
+}
+
+function rarityLabel(rarity) {
+  const map = {
+    'rarity_common_weapon':    'Consumer',
+    'rarity_uncommon_weapon':  'Industrial',
+    'rarity_rare_weapon':      'Mil-Spec',
+    'rarity_mythical_weapon':  'Restricted',
+    'rarity_legendary_weapon': 'Classified',
+    'rarity_ancient_weapon':   'Covert',
+  };
+  return map[rarity] || rarity;
+}
+
+function renderTradeupPanel() {
+  const count = tradeupSlots.length;
+  document.getElementById('tradeup-slot-count').textContent = `${count}/10`;
+
+  // Render slots
+  const slotsEl = document.getElementById('tradeup-slots');
+  slotsEl.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const slot = document.createElement('div');
+    const item = tradeupSlots[i];
+    if (item) {
+      slot.className = 'tradeup-slot filled';
+      slot.title = 'Click to remove';
+      slot.onclick = () => removeTradeupSlot(i);
+      const imgHtml = item.iconUrl
+        ? `<img src="${item.iconUrl}" onerror="this.style.display='none'">`
+        : '';
+      const wear = wearLabel(item.paintwear);
+      slot.innerHTML = `
+        ${imgHtml || '<div class="tradeup-slot-placeholder"></div>'}
+        <div class="tradeup-slot-info">
+          <div class="tradeup-slot-name">${item.name || 'Unknown'}</div>
+          <div class="tradeup-slot-wear">${wear ? wear + ' · ' : ''}${item.paintwear ?? "" ?? ''}</div>
+        </div>
+        <div class="tradeup-slot-num">${i + 1}</div>
+      `;
+    } else {
+      slot.className = 'tradeup-slot';
+      slot.innerHTML = `<div class="tradeup-slot-placeholder"></div><div class="tradeup-slot-info" style="color:var(--muted);font-size:11px;">Slot ${i + 1}</div><div class="tradeup-slot-num">${i + 1}</div>`;
+    }
+    slotsEl.appendChild(slot);
+  }
+
+  // Stats
+  if (count > 0) {
+    // Use float32 to match Valve's server-side C++ float arithmetic
+    const f32 = Math.fround;
+    let normSum = f32(0);
+    for (const i of tradeupSlots) {
+      const min = f32(i.minFloat ?? 0);
+      const max = f32(i.maxFloat ?? 1);
+      const range = f32(max - min) || f32(1);
+      normSum = f32(normSum + f32((f32(i.paintwear || 0) - min) / range));
+    }
+    const avgNormalized = f32(normSum / count);
+
+    document.getElementById('tradeup-avg-float').textContent = String(avgNormalized) + ' (norm)';
+    document.getElementById('tradeup-float-range').textContent = 'Depends on output';
+  } else {
+    document.getElementById('tradeup-avg-float').textContent = '—';
+    document.getElementById('tradeup-float-range').textContent = '—';
+  }
+
+  // Fetch and show outputs when all 10 slots filled
+  const executeBtn = document.getElementById('tradeup-execute-btn');
+  if (count === 10) {
+    executeBtn.disabled = false;
+    executeBtn.style.opacity = '1';
+    fetchAndShowOutputs();
+  } else {
+    executeBtn.disabled = true;
+    executeBtn.style.opacity = '0.5';
+    document.getElementById('tradeup-outputs-list').innerHTML = '<span style="color:var(--muted);font-size:11px;">Select 10 skins to see outputs</span>';
+  }
+}
+
+async function fetchAndShowOutputs() {
+  const collections = [...new Set(tradeupSlots.flatMap(i => i.collections || []))];
+  const rarity = tradeupRarity;
+
+  const params = new URLSearchParams();
+  params.append('rarity', rarity);
+  collections.forEach(c => params.append('collections[]', c));
+
+  const r = await fetch(`/api/tradeup/outputs?${params}`);
+  if (!r.ok) return;
+  const data = await r.json();
+  tradeupOutputs = data.outputs || [];
+
+  // Use float32 (Math.fround) to match Valve's server-side C++ float arithmetic exactly
+  const f32 = Math.fround;
+  let normSum = f32(0);
+  for (const i of tradeupSlots) {
+    const min = f32(i.minFloat ?? 0);
+    const max = f32(i.maxFloat ?? 1);
+    const range = f32(max - min) || f32(1);
+    normSum = f32(normSum + f32((f32(i.paintwear || 0) - min) / range));
+  }
+  const avgNormalized = f32(normSum / 10);
+
+  // Calculate per-output float using float32 math
+  const outputsWithFloat = tradeupOutputs.map(o => {
+    const outMin = f32(o.minFloat ?? 0);
+    const outMax = f32(o.maxFloat ?? 1);
+    const outFloat = f32(avgNormalized * f32(outMax - outMin) + outMin);
+    return { ...o, outFloat };
+  });
+
+  // Show output float range
+  if (outputsWithFloat.length > 0) {
+    const floats = outputsWithFloat.map(o => o.outFloat);
+    const minF = Math.min(...floats);
+    const maxF = Math.max(...floats);
+    document.getElementById('tradeup-float-range').textContent =
+      minF === maxF ? String(minF) : `${String(minF)} – ${String(maxF)}`;
+  }
+
+  // Probability: weight by share of inputs per collection, split evenly across outputs in that collection
+  const collectionInputCounts = new Map(); // collectionId → count of input skins
+  for (const item of tradeupSlots) {
+    for (const col of (item.collections || [])) {
+      collectionInputCounts.set(col, (collectionInputCounts.get(col) || 0) + 1);
+    }
+  }
+  // For each output, find which collections it belongs to and sum weighted chance
+  const outputChances = new Map(); // output key → chance
+  for (const o of outputsWithFloat) {
+    let chance = 0;
+    for (const col of (o.collections || [])) {
+      const inputsInCol = collectionInputCounts.get(col) || 0;
+      if (inputsInCol === 0) continue;
+      // How many outputs share this collection?
+      const outputsInCol = outputsWithFloat.filter(x => x.collections?.includes(col)).length;
+      chance += (inputsInCol / 10) * (1 / outputsInCol);
+    }
+    outputChances.set(o.key, chance);
+  }
+  const listEl = document.getElementById('tradeup-outputs-list');
+  listEl.innerHTML = '';
+
+  if (!outputsWithFloat.length) {
+    listEl.innerHTML = '<span style="color:var(--danger);font-size:11px;">No valid outputs found — check collections overlap</span>';
+    return;
+  }
+
+  const VISIBLE = 5;
+  const sorted = [...outputsWithFloat].sort((a, b) => (outputChances.get(b.key) || 0) - (outputChances.get(a.key) || 0));
+
+  function renderRow(o) {
+    const chance = outputChances.get(o.key) || 0;
+    const pct = (chance * 100).toFixed(2);
+    const el = document.createElement('div');
+    el.className = 'tradeup-output-item';
+    const imgHtml = o.iconUrl ? `<img src="${o.iconUrl}" onerror="this.style.display='none'">` : '';
+    el.innerHTML = `${imgHtml}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.name}</span><span style="font-size:9px;color:var(--muted);white-space:nowrap;margin-left:4px;">(${wearLabel(o.outFloat)} ${String(o.outFloat)})</span><span class="tradeup-output-pct">${pct}%</span>`;
+    return el;
+  }
+
+  sorted.slice(0, VISIBLE).forEach(o => listEl.appendChild(renderRow(o)));
+
+  if (sorted.length > VISIBLE) {
+    const remaining = sorted.length - VISIBLE;
+    const toggle = document.createElement('div');
+    toggle.style.cssText = 'font-size:11px;color:var(--accent);cursor:pointer;padding:4px 0;user-select:none;';
+    toggle.textContent = `▸ Show ${remaining} more…`;
+    let expanded = false;
+    const extraEls = sorted.slice(VISIBLE).map(renderRow);
+    toggle.onclick = () => {
+      expanded = !expanded;
+      if (expanded) {
+        extraEls.forEach(el => listEl.insertBefore(el, toggle));
+        toggle.textContent = `▴ Show less`;
+      } else {
+        extraEls.forEach(el => el.remove());
+        toggle.textContent = `▸ Show ${remaining} more…`;
+      }
+    };
+    listEl.appendChild(toggle);
+  }
+}
+
+async function executeTradeup() {
+  if (tradeupSlots.length !== 10) return;
+  const btn = document.getElementById('tradeup-execute-btn');
+  btn.disabled = true;
+  btn.textContent = 'Executing…';
+
+  const r = await fetch('/api/tradeup/execute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ itemIds: tradeupSlots.map(i => i.id), rarity: tradeupRarity }),
+  });
+
+  if (r.ok) {
+    const data = await r.json();
+    tradeupSlots = [];
+    tradeupLoaded = false;
+    // Refresh inventory to pick up new item
+    await loadInventory();
+    await loadTradeupItems();
+    renderTradeupPanel();
+
+    // Find the new item in inventory by ID
+    const newId = data.newItemIds?.[0];
+    const newItem = newId ? inventoryItems.find(i => i.id === newId) : null;
+
+    if (newItem) {
+      const wear = wearLabel(newItem.paintwear);
+      const imgHtml = newItem.iconUrl
+        ? `<img src="${newItem.iconUrl}" style="width:80px;height:58px;object-fit:contain;display:block;margin:0 auto 8px;">`
+        : '<div style="width:80px;height:58px;background:var(--surface2);border-radius:6px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🔫</div>';
+      showTradeupResult(imgHtml, newItem.name, wear, newItem.paintwear, newItem.stattrak);
+    } else {
+      toast('Trade-up complete!');
+    }
+  } else {
+    const err = await r.json();
+    toast(err.error || 'Trade-up failed', 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Execute Trade-Up';
+}
+
+function showTradeupResult(imgHtml, name, wear, float, stattrak) {
+  document.getElementById('tradeup-result-img').innerHTML = imgHtml;
+  document.getElementById('tradeup-result-name').textContent = name || 'Unknown Item';
+  document.getElementById('tradeup-result-wear').textContent = wear ? `${wear} (${wearLabel(float)})` : '';
+  document.getElementById('tradeup-result-float').textContent = float != null ? `Float: ${String(float)}` : '';
+  document.getElementById('tradeup-result-st').textContent = stattrak ? '★ StatTrak™' : '';
+  document.getElementById('tradeup-result-overlay').classList.add('visible');
+}
+
+function closeTradeupResult() {
+  document.getElementById('tradeup-result-overlay').classList.remove('visible');
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+checkInitialStatus();
+</script>
+</body>
+</html>

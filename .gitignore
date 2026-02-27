@@ -1,0 +1,21 @@
+node_modules/
+
+# Steam auth tokens - never commit these
+.refresh_token.json
+*.refresh_token.json
+
+# Environment / secrets
+.env
+.env.*
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
