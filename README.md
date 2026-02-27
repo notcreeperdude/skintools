@@ -1,6 +1,6 @@
 # SkinTools 🎮
 
-A local web app to manage your CS2 storage units — move items in and out in bulk.
+A local web app to manage your CS2 storage units - move items in and out in bulk.
 
 ## Setup
 
@@ -23,27 +23,15 @@ A local web app to manage your CS2 storage units — move items in and out in bu
 
 ## What it does
 
-- **View your inventory** — see all CS2 items in your Steam inventory
-- **View storage unit contents** — select any of your storage units from the dropdown
-- **Move items to storage** — select items in your inventory, click "Move to Storage"
-- **Move items to inventory** — select items in the storage unit, click "Move to Inventory"
-- **Bulk move** — select multiple items at once and move them all
+- **View your inventory** - see all CS2 items in your Steam inventory
+- **View storage unit contents** - select any of your storage units from the dropdown
+- **Move items to storage** - select items in your inventory, click "Move to Storage"
+- **Move items to inventory** - select items in the storage unit, click "Move to Inventory"
+- **Bulk move** - select multiple items at once and move them all
 
 ## Notes
 
-- You do NOT need CS2 installed — the app connects to the CS2 Game Coordinator directly
-- No VAC ban risk — the app never connects to a VAC-secured server
-- Nothing is sent to any third-party server — all communication is between your machine and Steam
-
-## File structure
-
-```
-skintools/
-  src/
-    server.js        ← Express server + Steam/GC logic
-  public/
-    index.html       ← Web UI
-  .refresh_token.json  ← Created automatically after first login (gitignored)
-  package.json
-  README.md
-```
+- You do NOT need CS2 installed - the app connects to the CS2 Game Coordinator directly
+- No VAC ban risk - the app never connects to a VAC-secured server
+- Nothing is sent to any third-party server - all communication is between your machine and Steam
+- Run at your own risk
