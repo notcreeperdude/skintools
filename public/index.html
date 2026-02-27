@@ -811,6 +811,7 @@
       <option value="">— select a storage unit —</option>
     </select>
     <input class="search-box" type="text" id="search-box" placeholder="Search items..." oninput="filterItems()" />
+    <button class="btn btn-secondary btn-sm" id="trade-filter-btn" onclick="toggleTradeFilter()" title="Show only tradeable items">🔓 Tradeable only</button>
     <div class="toolbar-right">
       <button class="btn btn-secondary btn-sm" onclick="refreshAll()">↻ Refresh</button>
       <button class="btn btn-secondary btn-sm" onclick="logout()">Log out</button>
@@ -1024,6 +1025,7 @@ let storageItems = [];
 let selectedInv = new Set();     // item ids selected in inventory
 let selectedStorage = new Set(); // item ids selected in storage
 let currentCasketId = null;
+let tradeFilterActive = false;
 let statusPollInterval = null;
 
 // Modal state
@@ -1385,14 +1387,30 @@ function getSearchQuery() {
   return document.getElementById('search-box').value.toLowerCase();
 }
 
+function toggleTradeFilter() {
+  tradeFilterActive = !tradeFilterActive;
+  const btn = document.getElementById('trade-filter-btn');
+  btn.style.borderColor = tradeFilterActive ? 'var(--accent)' : '';
+  btn.style.color = tradeFilterActive ? 'var(--accent)' : '';
+  filterItems();
+}
+
 function filterItems() {
   renderInventory();
   renderStorage();
 }
 
-function renderInventory() {
+function applyFilters(items) {
   const q = getSearchQuery();
-  const items = inventoryItems.filter(i => !q || itemName(i).toLowerCase().includes(q));
+  return items.filter(i => {
+    if (q && !itemName(i).toLowerCase().includes(q)) return false;
+    if (tradeFilterActive && i.tradeLocked) return false;
+    return true;
+  });
+}
+
+function renderInventory() {
+  const items = applyFilters(inventoryItems);
   document.getElementById('inv-count').textContent = items.length;
   const grid = document.getElementById('inv-grid');
   grid.innerHTML = '';
@@ -1407,8 +1425,7 @@ function renderInventory() {
 }
 
 function renderStorage() {
-  const q = getSearchQuery();
-  const items = storageItems.filter(i => !q || itemName(i).toLowerCase().includes(q));
+  const items = applyFilters(storageItems);
   document.getElementById('storage-count').textContent = items.length;
   const grid = document.getElementById('storage-grid');
   grid.innerHTML = '';

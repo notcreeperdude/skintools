@@ -590,6 +590,8 @@ app.post('/api/tradeup/execute', async (req, res) => {
 function formatItem(item) {
   const id = item.id?.toString();
   const schema = lookupSchema(item) || {};
+  const now = new Date();
+  const tradableAfter = item.tradable_after ? new Date(item.tradable_after) : null;
   return {
     id,
     defindex: item.def_index,
@@ -603,6 +605,8 @@ function formatItem(item) {
     stattrakValue: item.kill_eater_value ?? null,
     name: schema.name || null,
     iconUrl: schema.iconUrl || null,
+    tradeLocked: tradableAfter ? tradableAfter > now : false,
+    tradableAfter: tradableAfter ? tradableAfter.toISOString() : null,
   };
 }
 
